@@ -1,27 +1,26 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from hesaplamalar import atik_isleme_merkezi
-from modeller import Kullanici
+from modeller import Kullanici, veritabani_hazirla, tum_verileri_cek
 
 class AtikUygulamasi:
     def __init__(self, pencere):
         self.pencere = pencere
         self.pencere.title("Akıllı Atık Sistemi")
-        self.pencere.geometry("500x550")
-        self.pencere.configure(bg="#e8f5e9") # Açık yeşil arka plan
+        self.pencere.geometry("500x600")
+        self.pencere.configure(bg="#e8f5e9")
 
-        # Kullanıcılar
-        self.kullanicilar = {ad: Kullanici(ad) for ad in ["Berfin", "Mihra", "Gülsüm", "Fatih"]}
+        # Veritabanını kur ve verileri çek
+        veritabani_hazirla()
+        db_verileri = tum_verileri_cek()
+        
+        # Kullanıcı nesnelerini veritabanından gelen değerlerle oluştur
+        self.kullanicilar = {ad: Kullanici(ad, kg) for ad, kg in db_verileri}
 
-        # Stil Ayarları
-        stil = ttk.Style()
-        stil.configure("TButton", font=("Arial", 10, "bold"))
-
-        # Başlık
+        # --- ARAYÜZ BİLEŞENLERİ ---
         tk.Label(pencere, text="DOĞA DOSTU TAKİP PANELİ", font=("Arial", 14, "bold"), 
                  bg="#2d5a27", fg="white", pady=10).pack(fill="x")
 
-        # Seçim Alanları
         frame = tk.Frame(pencere, bg="#e8f5e9", pady=20)
         frame.pack()
 
@@ -40,11 +39,9 @@ class AtikUygulamasi:
         self.entry_miktar = tk.Entry(frame)
         self.entry_miktar.grid(row=4, column=1)
 
-        # Buton
         tk.Button(pencere, text="DÖNÜŞÜMÜ KAYDET", command=self.kaydet, 
                   bg="#2d5a27", fg="white", font=("Arial", 11, "bold"), width=20).pack(pady=10)
 
-        # Durum Tablosu
         self.stats_label = tk.Label(pencere, text="", font=("Consolas", 10), 
                                     bg="white", relief="sunken", bd=2, justify="left", padx=10, pady=10)
         self.stats_label.pack(pady=20, fill="both", padx=20)
@@ -54,18 +51,25 @@ class AtikUygulamasi:
         tablo = f"{'İsim':<10} | {'Miktar':<8} | {'Ünvan'}\n" + "-"*35 + "\n"
         for ad, obj in self.kullanicilar.items():
             kg, unvan = obj.get_istatistik()
-            tablo += f"{ad:<10} | {kg:>5} kg | {unvan}\n"
+            tablo += f"{ad:<10} | {kg:>5.1f} kg | {unvan}\n"
         self.stats_label.config(text=tablo)
 
     def kaydet(self):
         try:
-            ad, miktar, tur = self.user_combo.get(), float(self.entry_miktar.get()), self.tur_var.get()
+            ad = self.user_combo.get()
+            miktar = float(self.entry_miktar.get())
+            tur = self.tur_var.get()
+            
+            if miktar <= 0: raise ValueError
+            
             sonuc = atik_isleme_merkezi(tur, miktar)
-            self.kullanicilar[ad].atik_ekle(miktar)
+            self.kullanicilar[ad].atik_ekle(miktar) # Bu satır artık SQL'i de güncelliyor
             self.guncelle_tablo()
+            
             messagebox.showinfo("Başarılı", f"Kayıt Tamamlandı!\n{sonuc}")
-        except:
-            messagebox.showerror("Hata", "Geçerli bir miktar giriniz!")
+            self.entry_miktar.delete(0, tk.END)
+        except ValueError:
+            messagebox.showerror("Hata", "Lütfen 0'dan büyük geçerli bir miktar giriniz!")
 
 if __name__ == "__main__":
     root = tk.Tk()
