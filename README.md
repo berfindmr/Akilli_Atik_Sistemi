@@ -1,0 +1,1 @@
+# Akilli_Atik_Sistemi
