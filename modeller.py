@@ -60,9 +60,9 @@ class VeritabaniSistemi:
 
 class Atik:
     def __init__(self, miktar):
-        self.__miktar = miktar # Kapsülleme (Private)
+        self.__miktar = miktar 
 
-    def get_miktar(self): # Getter
+    def get_miktar(self): 
         return self.__miktar
 
 class KagitAtik(Atik): 
@@ -88,7 +88,7 @@ class Kullanici:
         """Kullanıcıya atık ekler ve veritabanını günceller."""
         if kg > 0: 
             self.__toplam_kg += kg
-            # Veritabanı sınıfı üzerinden güncelleme yapılır
+            
             VeritabaniSistemi.veri_guncelle(self.ad, kg) 
 
     def get_istatistik(self):
